@@ -1,0 +1,16 @@
+train: torchvision.transforms.compose(
+    [
+        transforms.Resize((64, 64)),
+        transforms.RandomHorizontalFlip(),
+    ]
+  )
+val: torchvision.transforms.compose(
+    [
+        transforms.Resize((64, 64)),
+    ]
+  )
+test: torchvision.transforms.compose(
+    [
+        transforms.Resize((64, 64)),
+    ]
+  )

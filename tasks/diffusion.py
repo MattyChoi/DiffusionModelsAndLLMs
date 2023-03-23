@@ -5,7 +5,7 @@ import torchmetrics
 from omegaconf import DictConfig
 
 
-class PoseEstimationModule(pl.LightningModule):
+class DiffusionModule(pl.LightningModule):
     def __init__(self, hparams: DictConfig):
         super().__init__()
         self.save_hyperparameters(hparams)

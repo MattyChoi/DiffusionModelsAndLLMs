@@ -1,0 +1,12 @@
+train:
+  _target_: datasets.cars.Cars
+  data_dir: ${hydra:runtime.cwd}/data
+  transform: null
+val:
+  _target_: datasets.cars.CarsTest
+  data_dir: ${hydra:runtime.cwd}/data
+  transform: null
+test: 
+  _target_: datasets.cars.CarsTest
+  data_dir: ${hydra:runtime.cwd}/data
+  transform: null

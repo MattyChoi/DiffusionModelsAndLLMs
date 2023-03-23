@@ -4,7 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 from omegaconf import DictConfig
 
 
-class OMCModule(pl.LightningDataModule):
+class CarsModule(pl.LightningDataModule):
     def __init__(
         self, 
         dataset: DictConfig,        # dictconfig that contains train, val, and test dataloaders
@@ -18,13 +18,8 @@ class OMCModule(pl.LightningDataModule):
         self.save_hyperparameters()
 
         self.train_dataset = hydra.utils.instantiate(dataset.train, transform=transform.train)
-        self.val_dataset = None
-        self.test_dataset = None
-
-        if val:
-            self.val_dataset = hydra.utils.instantiate(dataset.val, transform=transform.val)
-        if test:
-            self.test_dataset = hydra.utils.instantiate(dataset.test, transform=transform.test)
+        self.val_dataset = hydra.utils.instantiate(dataset.val, transform=transform.val)
+        self.test_dataset = hydra.utils.instantiate(dataset.test, transform=transform.test)
 
     def train_dataloader(self) -> DataLoader:
         return self._build_dataloader(

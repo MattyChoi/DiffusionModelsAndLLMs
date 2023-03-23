@@ -6,17 +6,17 @@ num_nodes: 1
 
 defaults:
   - _self_
-  - model: hrnet
+  - model: unet
   - data_module: max
-  - dataset: omc
-  - transform: no_transform
+  - dataset: cars
+  - transform: car_transform
   - loss: mse
   - user_overrides: null
 
 callbacks:
 
 tasks:
-  _target_: tasks.pred_pose.PoseEstimationModule
+  _target_: tasks.diffusion.DiffusionModule
 
 optimizer:
   _target_: torch.optim.Adam
