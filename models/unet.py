@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -41,7 +42,7 @@ class SinusoidalPositionEmbeddings(nn.Module):
     def forward(self, time):
         device = time.device
         half_dim = self.dim // 2
-        embeddings = torch.log(10000) / (half_dim - 1)
+        embeddings = math.log(10000) / (half_dim - 1)
         embeddings = torch.exp(torch.arange(half_dim, device=device) * -embeddings)
         embeddings = time[:, None] * embeddings[None, :]
         embeddings = torch.cat((embeddings.sin(), embeddings.cos()), dim=-1)
@@ -83,6 +84,7 @@ class Unet(nn.Module):
         self.output = nn.Conv2d(up_channels[-1], 3, out_dim)
 
     def forward(self, x, timestep):
+        x = x.float()
         # Embedd time
         t = self.time_mlp(timestep)
         # Initial conv

@@ -11,6 +11,8 @@ from pytorch_lightning.trainer import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
+from utils.visualize import plot_sample_image
+
 
 def get_predict_params(cfg: DictConfig):
     params = OmegaConf.to_container(cfg.trainer, resolve=True)
@@ -49,20 +51,24 @@ def pred(cfg: DictConfig):
         pretrained, dataset=cfg.dataset, map_location=None
     )
 
-    # build data for model to be trained on
-    data_module = hydra.utils.instantiate(
-        cfg.data_module,
-        dataset=cfg.dataset,
-        transform=cfg.transform,
-        _recursive_=False,
-    )
+    # build data for model to test on
+    # data_module = hydra.utils.instantiate(
+    #     cfg.data_module,
+    #     dataset=cfg.dataset,
+    #     transform=cfg.transform,
+    #     _recursive_=False,
+    # )
 
     # create the Trainer object with all the wanted configurations
-    params = get_predict_params(cfg)
-    trainer = Trainer(**params)
+    # params = get_predict_params(cfg)
+    # trainer = Trainer(**params)
 
     # test the model
-    trainer.test(model=task, datamodule=data_module)
+    # trainer.test(model=task, datamodule=data_module)
+
+    imgs = task.model.sample()
+    plot_sample_image(imgs[-1])
+
 
 
 @hydra.main(version_base=None, config_path="../config", config_name="test_defaults")

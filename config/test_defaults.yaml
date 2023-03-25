@@ -6,17 +6,17 @@ num_nodes: 1
 
 defaults:
   - _self_
-  - model: hrnet
+  - model: diffusion
   - data_module: max
-  - dataset: omc
-  - transform: no_transform
+  - dataset: cars
+  - transform: car_transform
   - loss: mse
   - user_overrides: null
 
 callbacks:
 
 tasks:
-  _target_: tasks.pred_pose.PoseEstimationModule
+  _target_: tasks.generate.DiffusionModule
   
 
-pretrained: tb_logs\lightning_logs\version_2\checkpoints\epoch=1-step=6692.ckpt # add path to the pretrained weights
+pretrained: tb_logs\lightning_logs\version_22\checkpoints\epoch=5-step=3036.ckpt # add path to the pretrained weights

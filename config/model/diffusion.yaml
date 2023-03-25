@@ -1,0 +1,6 @@
+_target_: models.diffusion.Diffusion
+model: 
+  _target_: models.unet.Unet
+image_size: 64
+timesteps: 300
+beta_schedule: "cosine"

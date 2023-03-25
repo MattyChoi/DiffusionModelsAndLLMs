@@ -18,33 +18,35 @@ class DiffusionModule(pl.LightningModule):
     def training_step(
         self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
     ) -> torch.Tensor:
-        # get the training images and output heatmaps
-        images, hmaps = batch
+        # get the training image distribution
+        images = batch
 
-        # predict the heatmaps from the images
-        pred_hmaps = self.forward(images)
+        # noise the images randomly and predict the noise from the noisy images
+        pred_noise, noise = self.forward(images)
 
-        return self.loss(pred_hmaps, hmaps)
+        return self.loss(pred_noise, noise)
 
     def validation_step(
         self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
     ) -> torch.Tensor:
-        images, hmaps = batch
+        # get the training image distribution
+        images = batch
 
-        # predict the heatmaps from the images
-        pred_hmaps = self.forward(images)
+        # noise the images randomly and predict the noise from the noisy images
+        pred_noise, noise = self.forward(images)
 
-        return pred_hmaps
+        return self.loss(pred_noise, noise)
 
     def test_step(
         self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
     ) -> torch.Tensor:
-        images, hmaps = batch
+        # get the training image distribution
+        images = batch
 
-        # predict the heatmaps from the images
-        pred_hmaps = self.forward(images)
+        # noise the images randomly and predict the noise from the noisy images
+        pred_noise, noise = self.forward(images)
 
-        return pred_hmaps
+        return self.loss(pred_noise, noise)
 
     def configure_optimizers(self):
         optimizer = hydra.utils.instantiate(

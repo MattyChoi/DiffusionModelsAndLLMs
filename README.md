@@ -8,10 +8,6 @@ pip install -r requirements.txt
 ```
 if you do not have all the necessary packages listed.
 
-## Navigating the Codebase
-
-This template is separated into many folders but allows for clean separation of different sections for training a neural network. The [config](https://github.com/MattyChoi/OpenMonkeyChallenge/tree/main/config) folder contains yaml files to allow fast changes to parameters of your hyperparameters for training, dataset configurations, model parameters, etc. The other folders contain code relevant to the name of the folder. 
-
 ## Train 
 
 To train the model, run the following command in the terminal:

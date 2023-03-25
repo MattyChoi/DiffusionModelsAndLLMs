@@ -3,9 +3,6 @@ import sys
 # Import modules from base directory
 sys.path.insert(0, os.getcwd())
 
-import json
-import numpy as np
-import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import torch
 import torchvision
@@ -30,29 +27,21 @@ class Cars(Dataset):
     def __init__(self, data_dir="", transform=None):
         super(Cars, self).__init__()
 
-        self.transform = transform
-        self.data = torchvision.datasets.StanfordCars(root=data_dir)
+        train = torchvision.datasets.StanfordCars(root=data_dir, transform=transform)
+        test = torchvision.datasets.StanfordCars(root=data_dir, split="test", transform=transform)
+
+        self.data = torch.utils.data.ConcatDataset([train, test])
 
 
     def __getitem__(self, index):
-        sample = tsfm.ToTensor()(self.data[index][0])
-        sample *= 2
-        sample -= 1
-
-        if self.transform:
-            sample = self.transform(sample)
-
-        return sample
+        return self.data[index][0] * 2.0 - 1.0
 
     def __len__(self):
-        return len(self.feature_list)
+        return len(self.data)
 
 
     def collate_fn(self, batch):
-        imgs = list(zip(*batch))
-        imgs = torch.stack(imgs, dim=0)
-
-        return imgs
+        return torch.stack(batch, dim=0)
 
 
 class CarsTest(Dataset):
@@ -60,35 +49,27 @@ class CarsTest(Dataset):
     Dataset of car images
     """
     def __init__(self, data_dir="", transform=None):
-        super(Cars, self).__init__()
+        super(CarsTest, self).__init__()
 
-        self.transform = transform
-        self.data = torchvision.datasets.StanfordCars(root=data_dir, split="test")
+        train = torchvision.datasets.StanfordCars(root=data_dir, transform=transform)
+        test = torchvision.datasets.StanfordCars(root=data_dir, split="test", transform=transform)
+
+        self.data = torch.utils.data.ConcatDataset([train, test])
 
 
     def __getitem__(self, index):
-        sample = tsfm.ToTensor()(self.data[index][0])
-        sample *= 2
-        sample -= 1
-
-        if self.transform:
-            sample = self.transform(sample)
-
-        return sample
+        return self.data[index][0] * 2.0 - 1.0
 
     def __len__(self):
-        return len(self.feature_list)
+        return len(self.data)
 
 
     def collate_fn(self, batch):
-        imgs = list(zip(*batch))
-        imgs = torch.stack(imgs, dim=0)
-
-        return imgs
+        return torch.stack(batch, dim=0)
     
 
-if __name__ == "main":
-    print('hi')
-    ds = CarsTest(data_dir=r"C:\Users\matth\OneDrive\Documents\Storage\Projects\DiffusionModel\data")
-    print('bye')
+# if __name__ == "main":
+#     print('hi')
+#     ds = CarsTest(data_dir=r"C:\Users\matth\OneDrive\Documents\Storage\Projects\DiffusionModel\data")
+#     print('bye')
 
