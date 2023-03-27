@@ -66,6 +66,7 @@ def pred(cfg: DictConfig):
     # test the model
     # trainer.test(model=task, datamodule=data_module)
 
+    # sample several images and plot them
     imgs = task.model.sample()
     plot_sample_image(imgs[-1])
 

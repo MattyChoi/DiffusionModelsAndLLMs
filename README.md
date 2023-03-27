@@ -1,6 +1,6 @@
-# OpenMonkeyChallenge
+# Diffusion Module
 
-This repo contains a simple template for training models with the PyTorch Lightning framework with Hydra for organizing config files. To show a use case, I've tailored this template to train a pose estimation model for monkeys using the [OpenMonkey Challenge](https://openmonkeychallenge.com/) dataset. 
+This repo contains an implementation of denoising diffusion modules with the PyTorch Lightning framework with Hydra for organizing config files.
 
 Once in the directory containing the contents of the repository, run
 ```

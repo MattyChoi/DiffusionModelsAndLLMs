@@ -1,6 +1,8 @@
 outputs
 tb_logs
 text-sed
+sample.png
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
