@@ -1,3 +1,8 @@
+import os
+import sys
+# Import modules from base directory
+sys.path.insert(0, os.getcwd())
+
 import hydra
 import pytorch_lightning as pl
 import torch
@@ -24,7 +29,11 @@ class DiffusionModule(pl.LightningModule):
         # noise the images randomly and predict the noise from the noisy images
         pred_noise, noise = self.forward(images)
 
-        return self.loss(pred_noise, noise)
+        # computer loss and log
+        loss = self.loss(pred_noise, noise)
+        self.log("train_loss", loss, on_step=True, one_epoch=True)
+
+        return loss
 
     def validation_step(
         self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
@@ -35,7 +44,20 @@ class DiffusionModule(pl.LightningModule):
         # noise the images randomly and predict the noise from the noisy images
         pred_noise, noise = self.forward(images)
 
-        return self.loss(pred_noise, noise)
+        # computer loss and log
+        loss = self.loss(pred_noise, noise)
+        self.log("val_loss", loss, on_step=True)
+
+        return loss
+
+    def validation_epoch_end(self, val_step_outs) -> None:
+        tboard = self.logger.experiment
+
+        # sample 16 images
+        imgs = self.model.sample(batch_size=16)
+
+        tboard.add_images(f"Generated Images_{self.global_step}", img_tensor=imgs[-1], dataformats="NHWC")
+
 
     def test_step(
         self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
@@ -46,7 +68,11 @@ class DiffusionModule(pl.LightningModule):
         # noise the images randomly and predict the noise from the noisy images
         pred_noise, noise = self.forward(images)
 
-        return self.loss(pred_noise, noise)
+        # computer loss and log
+        loss = self.loss(pred_noise, noise)
+        self.log("test_loss", loss, on_step=True)
+
+        return loss
 
     def configure_optimizers(self):
         optimizer = hydra.utils.instantiate(

@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-random_index = 53
 
 def plot_sample_gif(imgs, timesteps=300):
+    random_index = 0
     fig = plt.figure()
     ims = []
     for i in range(timesteps):

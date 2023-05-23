@@ -13,14 +13,17 @@ defaults:
   - loss: mse
   - user_overrides: null
 
+
+pretrained: tb_logs\lightning_logs\version_12\checkpoints\epoch=129-step=14040.ckpt # add path to the pretrained weights
+
 callbacks:
 
 tasks:
-  _target_: tasks.generate_car_img.DiffusionModule
+  _target_: tasks.generate_img.DiffusionModule
 
 optimizer:
   _target_: torch.optim.Adam
-  lr: 1e-3
+  lr: 1e-5
 
 lr_scheduler:
   _target_: torch.optim.lr_scheduler.MultiStepLR
@@ -29,11 +32,11 @@ lr_scheduler:
 
 trainer:
   precision: 32
-  max_epochs: 100
+  max_epochs: 1000
   benchmark: True
   profiler: null
   num_sanity_val_steps: 0
-  check_val_every_n_epoch: 5
+  check_val_every_n_epoch: 10
   accelerator: 'gpu'
   devices: ${gpu}
   num_nodes: ${num_nodes}

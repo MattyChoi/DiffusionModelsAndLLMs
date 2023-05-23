@@ -2,18 +2,18 @@ train:
   _target_: torchvision.transforms.Compose
   transforms:
     - _target_: torchvision.transforms.Resize
-      size: [64, 64]
+      size: [24, 24]
     - _target_: torchvision.transforms.RandomHorizontalFlip
     - _target_: torchvision.transforms.ToTensor
 val: 
   _target_: torchvision.transforms.Compose
   transforms:
     - _target_: torchvision.transforms.Resize
-      size: [64, 64]
+      size: [24, 24]
     - _target_: torchvision.transforms.ToTensor
 test: 
   _target_: torchvision.transforms.Compose
   transforms:
     - _target_: torchvision.transforms.Resize
-      size: [64, 64]
+      size: [24, 24]
     - _target_: torchvision.transforms.ToTensor

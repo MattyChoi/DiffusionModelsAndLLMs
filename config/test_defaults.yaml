@@ -16,7 +16,7 @@ defaults:
 callbacks:
 
 tasks:
-  _target_: tasks.generate_car_img.DiffusionModule
+  _target_: tasks.generate_img.DiffusionModule
   
 
-pretrained: tb_logs\lightning_logs\version_2\checkpoints\epoch=34-step=5915.ckpt # add path to the pretrained weights
+pretrained: tb_logs\lightning_logs\version_12\checkpoints\epoch=129-step=14040.ckpt # add path to the pretrained weights

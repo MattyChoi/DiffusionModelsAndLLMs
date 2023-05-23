@@ -60,6 +60,12 @@ def train(cfg: DictConfig):
         _recursive_=False,
     )
 
+    if cfg.pretrained:
+        task = task.load_from_checkpoint(
+            cfg.pretrained,
+            dataset=cfg.dataset, 
+        )
+
     # create the Trainer object with all the wanted configurations
     params = get_train_params(cfg)
     trainer = Trainer(**params)

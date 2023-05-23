@@ -4,7 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 from omegaconf import DictConfig
 
 
-class CarsModule(pl.LightningDataModule):
+class DataModule(pl.LightningDataModule):
     def __init__(
         self, 
         dataset: DictConfig,        # dictconfig that contains train, val, and test dataloaders
