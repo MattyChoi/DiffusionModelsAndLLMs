@@ -1,14 +1,14 @@
 import hydra
-import pytorch_lightning as pl
+import lightning as L
 from torch.utils.data import Dataset, DataLoader
 from omegaconf import DictConfig
 
 
-class DataModule(pl.LightningDataModule):
+class DataModule(L.LightningDataModule):
     def __init__(
         self, 
         dataset: DictConfig,        # dictconfig that contains train, val, and test dataloaders
-        transform: DictConfig,     # transforms to apply
+        transform: DictConfig,     # transforms to apLy
         train: DictConfig,          # dataloader arguments from the data_module config file
         val: DictConfig = None, 
         test: DictConfig = None

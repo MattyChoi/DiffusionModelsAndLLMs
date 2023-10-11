@@ -10,7 +10,7 @@ import torchmetrics
 from omegaconf import DictConfig
 
 
-class DiffusionModule(L.LightningModule):
+class GenTextModule(L.LightningModule):
     def __init__(self, hparams: DictConfig):
         super().__init__()
         self.save_hyperparameters(hparams)

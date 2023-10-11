@@ -14,7 +14,7 @@ defaults:
   - user_overrides: null
 
 
-pretrained: tb_logs\lightning_logs\version_12\checkpoints\epoch=129-step=14040.ckpt # add path to the pretrained weights
+pretrained: tb_logs\lightning_logs\car_version\checkpoints\epoch=449-step=48600.ckpt # add path to the pretrained weights
 
 callbacks:
 

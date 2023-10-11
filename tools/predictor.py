@@ -6,10 +6,10 @@ sys.path.insert(0, os.getcwd())
 import hydra
 from typing import Dict
 from omegaconf import DictConfig, OmegaConf
-from pytorch_lightning import seed_everything
-from pytorch_lightning.trainer import Trainer
-from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.callbacks import ModelCheckpoint
+from lightning import seed_everything
+from lightning.pytorch.trainer import Trainer
+from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.callbacks import ModelCheckpoint
 
 from utils.visualize import plot_sample_image
 

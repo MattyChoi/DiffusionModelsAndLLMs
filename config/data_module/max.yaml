@@ -1,4 +1,4 @@
-_target_: datasets.pl_data_module.DataModule
+_target_: dataset.pl_data_module.DataModule
 train:
   batch_size: 150
   shuffle: True

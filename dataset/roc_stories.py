@@ -4,7 +4,7 @@ from typing import Set
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-import datasets
+import dataset
 
 _URL = [
     "https://ytlin.s3.ap-northeast-1.amazonaws.com/data/huggingface_datasets/ROCStories/ROCStories2016.csv",
@@ -12,29 +12,29 @@ _URL = [
 ]
 
 
-class RocStories(datasets.GeneratorBasedBuilder):
-    VERSION = datasets.Version("1.0.0")
-    BUILDER_CONFIGS = [datasets.BuilderConfig(name="default")]
+class RocStories(dataset.GeneratorBasedBuilder):
+    VERSION = dataset.Version("1.0.0")
+    BUILDER_CONFIGS = [dataset.BuilderConfig(name="default")]
     # DEFAULT_CONFIG_NAME = "default"
 
     def _info(self):
-        features = datasets.Features(
+        features = dataset.Features(
             {
                 # origianl features
-                "storyid": datasets.Value("string"),
-                "storytitle": datasets.Value("string"),
-                "sentence1": datasets.Value("string"),
-                "sentence2": datasets.Value("string"),
-                "sentence3": datasets.Value("string"),
-                "sentence4": datasets.Value("string"),
-                "sentence5": datasets.Value("string"),
+                "storyid": dataset.Value("string"),
+                "storytitle": dataset.Value("string"),
+                "sentence1": dataset.Value("string"),
+                "sentence2": dataset.Value("string"),
+                "sentence3": dataset.Value("string"),
+                "sentence4": dataset.Value("string"),
+                "sentence5": dataset.Value("string"),
                 # model-specific
-                "text": datasets.Value("string"),
+                "text": dataset.Value("string"),
             }
         )
-        return datasets.DatasetInfo(features=features)
+        return dataset.DatasetInfo(features=features)
 
-    def _split_generators(self, dl_manager: datasets.DownloadManager):
+    def _split_generators(self, dl_manager: dataset.DownloadManager):
         data_paths = self.dl_manager.download_and_extract(_URL)
         df = pd.concat([pd.read_csv(data_path) for data_path in data_paths])
         storyids = df["storyid"].to_list()
@@ -46,16 +46,16 @@ class RocStories(datasets.GeneratorBasedBuilder):
         test_storyids = set(test_storyids)
 
         return [
-            datasets.SplitGenerator(
-                name=datasets.Split.TRAIN,
+            dataset.SplitGenerator(
+                name=dataset.Split.TRAIN,
                 gen_kwargs={"df": df, "story_ids": train_storyids},
             ),
-            datasets.SplitGenerator(
-                name=datasets.Split.VALIDATION,
+            dataset.SplitGenerator(
+                name=dataset.Split.VALIDATION,
                 gen_kwargs={"df": df, "story_ids": test_storyids},
             ),
-            datasets.SplitGenerator(
-                name=datasets.Split.TEST,
+            dataset.SplitGenerator(
+                name=dataset.Split.TEST,
                 gen_kwargs={"df": df, "story_ids": test_storyids},
             ),
         ]

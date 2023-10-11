@@ -133,7 +133,7 @@ class Diffusion(nn.Module):
         mean = sqrt_alphas_cumprod_t.to(device) * x_0.to(device)
         var = sqrt_one_minus_alphas_cumprod_t.to(device)
 
-        return mean + var * noise.to(device), noise.to(device)
+        return (mean + var * noise).to(device), noise.to(device)
         
 
     def forward(self, x_0):
