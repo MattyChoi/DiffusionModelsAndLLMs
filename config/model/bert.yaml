@@ -1,4 +1,0 @@
-_target_: models.bert.BERT
-image_size: 24
-timesteps: 300
-beta_schedule: "cosine"

@@ -32,7 +32,7 @@ class NLGDataset(Dataset):
     """
     Dataset of texts in english from oscar-corpus/OSCAR-2301 huggingface
     """
-    def __init__(self, split="train", tokenizer=""):
+    def __init__(self, split="train", tokenizer="", max_length=1024):
         super(NLGDataset, self).__init__()
         
         dataset = load_dataset(
@@ -52,7 +52,7 @@ class NLGDataset(Dataset):
         tokenized_dataset = dataset.map(
             partial(
                 tokenize_fn,
-                max_length=32,
+                max_length=max_length,
                 tokenizer=self.tokenizer,
                 text_attr="human_reference",
             ),

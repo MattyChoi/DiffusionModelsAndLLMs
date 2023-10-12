@@ -1,0 +1,6 @@
+_target_: models.text_gen.gpt_llm.Diffusion
+vocab_size: 
+emb_dim: 
+block_size: 
+num_heads:
+num_layers: 

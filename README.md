@@ -24,3 +24,9 @@ To observe tensorboard logs if enabled, use the following command
 ```
 tensorboard --logdir ./tb_logs/lightning_logs/{current version}
 ```
+
+Some useful links
+ - https://github.com/karpathy/nanoGPT
+ - https://github.com/jon-tow/text-sed
+ - https://github.com/Infatoshi/fcc-intro-to-llms
+ 

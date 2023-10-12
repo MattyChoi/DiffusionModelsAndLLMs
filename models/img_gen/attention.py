@@ -1,8 +1,7 @@
 import torch
 from torch import nn, einsum
 
-from einops import rearrange, reduce, repeat
-from einops.layers.torch import Rearrange
+from einops import rearrange
 
 
 class LayerNorm(nn.Module):
@@ -31,6 +30,7 @@ class PreNorm(nn.Module):
 class LinearAttention(nn.Module):
     def __init__(self, dim, heads = 4, dim_head = 32):
         super().__init__()
+        
         self.scale = dim_head ** -0.5
         self.heads = heads
         hidden_dim = dim_head * heads

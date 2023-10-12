@@ -2,11 +2,14 @@ train:
   _target_: dataset.e2e_nlg.NLGDataset
   split: "train"
   tokenizer: null
+  max_length: 1024
 val:
   _target_: dataset.e2e_nlg.NLGDataset
   split: "validation"
   tokenizer: null
+  max_length: 1024
 test: 
   _target_: dataset.e2e_nlg.NLGDataset
   split: "test"
   tokenizer: null
+  max_length: 1024
