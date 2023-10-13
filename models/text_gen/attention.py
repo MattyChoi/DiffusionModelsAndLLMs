@@ -30,23 +30,23 @@ class LayerNorm(nn.Module):
 class CausalSelfAttention(nn.Module):
     """ Multi-Head attention mechanism """
 
-    def __init__(self, dim, max_length, heads = 4, head_dim = 32, dropout=0.1, masked=True):
+    def __init__(self, emb_dim, max_length, num_heads = 4, head_dim = 32, dropout=0.1, masked=True):
         super().__init__()
         # scale the QK^T
         self.scale = head_dim ** -0.5
         
         # set the number of heads we want for multi-head attention
-        self.heads = heads
+        self.num_heads = num_heads
 
         # head_dim is the new dimensions we want for each word embedding so to achieve 
         # multi-head attention, multiply this by the desired number of heads
-        hidden_dim = head_dim * heads
+        hidden_dim = head_dim * num_heads
         
         # create the matrices needed to compute the query, key, and value vectors
-        self.to_qkv = nn.Linear(dim, hidden_dim * 3)
+        self.to_qkv = nn.Linear(emb_dim, hidden_dim * 3)
 
         # one last mlp to combine all information from all the heads
-        self.to_out = nn.Linear(hidden_dim, dim)
+        self.to_out = nn.Linear(hidden_dim, emb_dim)
 
         # dropouts for qkv computing and multi-head attention projection
         self.dropout = nn.Dropout(dropout)
@@ -70,7 +70,7 @@ class CausalSelfAttention(nn.Module):
 
         # rearrange the vectors so that we separate by each head
         # new shape = batch, head, position(timestep), head_dim
-        q, k, v = map(lambda t: rearrange(t, 'b t (h d) -> b h t d', h = self.heads), qkv)
+        q, k, v = map(lambda t: rearrange(t, 'b t (h d) -> b h t d', h = self.num_heads), qkv)
 
         # matrix multiply the query and key vectors to get a table of the dot products
         # of each query and key vector at every pair of timesteps in the given block
