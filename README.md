@@ -29,4 +29,5 @@ Some useful links
  - https://github.com/karpathy/nanoGPT
  - https://github.com/jon-tow/text-sed
  - https://github.com/Infatoshi/fcc-intro-to-llms
- 
+ - https://towardsdatascience.com/train-and-deploy-fine-tuned-gpt-2-model-using-pytorch-on-amazon-sagemaker-to-classify-news-articles-612f9957c7b
+ - https://medium.com/@jacobparnell/tune-transformers-using-pytorch-lightning-and-huggingface-f056373ff0e3

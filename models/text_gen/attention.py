@@ -1,93 +1,101 @@
 import torch
 from torch import nn, einsum
 
-from einops import rearrange, reduce, repeat
-from einops.layers.torch import Rearrange
+from einops import rearrange
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 
 
 class LayerNorm(nn.Module):
-    def __init__(self, dim):
+    """ LayerNorm but with an optional bias. PyTorch doesn't support bias, simply bias=False """
+
+    def __init__(self, dim, bias):
         super().__init__()
-        self.g = nn.Parameter(torch.ones(1, dim, 1, 1))
+        self.weight = nn.Parameter(torch.ones(dim))
+        self.bias = nn.Parameter(torch.zeros(dim)) if bias else None
 
     def forward(self, x):
+        # return F.layer_norm(input, self.weight.shape, self.weight, self.bias, 1e-5)
         eps = 1e-5 if x.dtype == torch.float32 else 1e-3
         var = torch.var(x, dim = 1, unbiased = False, keepdim = True)
         mean = torch.mean(x, dim = 1, keepdim = True)
-        return (x - mean) * (var + eps).rsqrt() * self.g
-
-
-class PreNorm(nn.Module):
-    def __init__(self, dim, fn):
-        super().__init__()
-        self.fn = fn
-        self.norm = LayerNorm(dim)
-
-    def forward(self, x):
-        x = self.norm(x)
-        return self.fn(x)
+        x_normalized = (x - mean) * (var + eps).rsqrt()
+        return x_normalized * self.weight + self.bias
     
 
-class LinearAttention(nn.Module):
-    def __init__(self, dim, heads = 4, dim_head = 32):
+# https://jalammar.github.io/illustrated-transformer/
+# nice website to read up on how transformers and attention works
+class CausalSelfAttention(nn.Module):
+    """ Multi-Head attention mechanism """
+
+    def __init__(self, dim, max_length, heads = 4, head_dim = 32, dropout=0.1, masked=True):
         super().__init__()
-        self.scale = dim_head ** -0.5
+        # scale the QK^T
+        self.scale = head_dim ** -0.5
+        
+        # set the number of heads we want for multi-head attention
         self.heads = heads
-        hidden_dim = dim_head * heads
 
-        # We use hidden_dim * 3 since we chunk it into the QKV vectors
-        self.to_qkv = nn.Conv2d(dim, hidden_dim * 3, 1, bias = False)
+        # head_dim is the new dimensions we want for each word embedding so to achieve 
+        # multi-head attention, multiply this by the desired number of heads
+        hidden_dim = head_dim * heads
+        
+        # create the matrices needed to compute the query, key, and value vectors
+        self.to_qkv = nn.Linear(dim, hidden_dim * 3)
 
-        self.to_out = nn.Sequential(
-            nn.Conv2d(hidden_dim, dim, 1),
-            LayerNorm(dim)
+        # one last mlp to combine all information from all the heads
+        self.to_out = nn.Linear(hidden_dim, dim)
+
+        # dropouts for qkv computing and multi-head attention projection
+        self.dropout = nn.Dropout(dropout)
+        self.mha_dropout = nn.Dropout(dropout)
+
+        # if masked attention, we need to make sure that at each timestep, we can't see information
+        # from future timesteps
+        self.masked = masked
+        self.register_buffer(
+            'mask', 
+            torch.tril(torch.ones(max_length, max_length)).view((1, 1, max_length, max_length)),
         )
 
-    def forward(self, x):
-        b, c, h, w = x.shape
-        qkv = self.to_qkv(x).chunk(3, dim = 1)
-        q, k, v = map(lambda t: rearrange(t, 'b (h c) x y -> b h c (x y)', h = self.heads), qkv)
-
-        q = q.softmax(dim = -2)
-        k = k.softmax(dim = -1)
-
-        q = q * self.scale
-        v = v / (h * w)
-
-        context = torch.einsum('b h d n, b h e n -> b h d e', k, v)
-
-        out = torch.einsum('b h d e, b h d n -> b h e n', context, q)
-        out = rearrange(out, 'b h c (x y) -> b (h c) x y', h = self.heads, x = h, y = w)
-        return self.to_out(out)
-    
-
-class Attention(nn.Module):
-    def __init__(self, dim, heads = 4, dim_head = 32):
-        super().__init__()
-        self.scale = dim_head ** -0.5
-        self.heads = heads
-        hidden_dim = dim_head * heads
-
-        self.to_qkv = nn.Conv2d(dim, hidden_dim * 3, 1, bias = False)
-        self.to_out = nn.Conv2d(hidden_dim, dim, 1)
 
     def forward(self, x):
-        b, c, h, w = x.shape
-        qkv = self.to_qkv(x).chunk(3, dim = 1)
+        # batch, position (timestep), dimension of word embedding
+        b, t, c = x.shape
 
-        # h here is the number of heads, for some reason the number of heads is already found
-        # by dividing the number of channels by the number of heads we want to use
-        # old numnber of channels = num_heads * new number of channels
-        q, k, v = map(lambda t: rearrange(t, 'b (h c) x y -> b h c (x y)', h = self.heads), qkv)
+        # get the query, value, and key vectors
+        qkv = self.to_qkv(x).chunk(3, dim = 2)
 
-        q = q * self.scale
+        # rearrange the vectors so that we separate by each head
+        # new shape = batch, head, position(timestep), head_dim
+        q, k, v = map(lambda t: rearrange(t, 'b t (h d) -> b h t d', h = self.heads), qkv)
 
-        # essentially a batch matrix multiplication
-        sim = einsum('b h d i, b h d j -> b h i j', q, k)
+        # matrix multiply the query and key vectors to get a table of the dot products
+        # of each query and key vector at every pair of timesteps in the given block
+        # i is the dimension for the query vector, and k is the dimenstion for the key vector
+        scores = einsum('b h i d, b h j d -> b h i j', q, k)
 
-        # softmax over the last dimension
-        attn = sim.softmax(dim = -1)
+        # scale this product by the square root of the dimension of the vectors
+        scores *= self.scale
+
+        # if there is masking, we need to mask the scores for future timesteps
+        if self.masked:
+            # since the matrix is lower triangular, for each query, we can only see 
+            # key vectors from the same or a previous timestep
+            scores = scores.masked_fill(self.mask[:t][:t] == 0, float('-inf'))
+
+        # softmax over the last dimension (the dimension of the key vectors)
+        attn = scores.softmax(dim = -1)
+        attn = self.dropout(attn)
+
+        # basically a linear combination where attn is the weights and v is the values
         out = einsum('b h i j, b h d j -> b h i d', attn, v)
 
-        out = rearrange(out, 'b h (x y) d -> b (h d) x y', x = h, y = w)
-        return self.to_out(out)
+        # concatenate all the heads now
+        out = rearrange(out, 'b h t d -> b t (h d)')
+        out = self.mha_dropout(self.to_out(out))
+
+        return out
+    

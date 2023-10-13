@@ -65,6 +65,11 @@ class NLGDataset(Dataset):
 
         self.dataset = tokenized_dataset
 
+        self.collator = DataCollatorWithPadding(
+            tokenizer=self.tokenizer,
+            return_tensors="pt",
+        )
+
     def __getitem__(self, index):
         return self.dataset[index]
 
@@ -72,10 +77,7 @@ class NLGDataset(Dataset):
         return len(self.dataset)
     
     def collate_fn(self, batch):
-        return DataCollatorWithPadding(
-            tokenizer=self.tokenizer,
-            return_tensors="pt",
-        )(batch)
+        return self.collator(batch)
     
 
 # if __name__ == "__main__":
