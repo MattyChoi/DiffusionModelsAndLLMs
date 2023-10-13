@@ -1,6 +1,6 @@
 _target_: models.text_gen.gpt2.GPT
-vocab_size: 
-emb_dim: 
-block_size: 
-num_heads:
-num_layers: 
+vocab_size: 32768
+max_length: 1024
+emb_dim: 768
+num_heads: 12
+num_layers: 12

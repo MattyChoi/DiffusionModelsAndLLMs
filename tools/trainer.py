@@ -19,7 +19,7 @@ def get_train_params(cfg: DictConfig):
     if cfg.log:
         # logging using tensorboard
         # https://pytorch-lightning.readthedocs.io/en/stable/api/pytorch_lightning.loggers.tensorboard.html
-        logger = TensorBoardLogger(save_dir="tb_logs")
+        logger = TensorBoardLogger(save_dir="./")
 
         # pytorch lightning callbacks
         # https://pytorch-lightning.readthedocs.io/en/stable/extensions/callbacks.html#:~:text=A%20callback%20is%20a%20self,your%20lightning%20module%20to%20run.
