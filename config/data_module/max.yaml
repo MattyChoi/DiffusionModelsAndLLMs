@@ -1,6 +1,6 @@
 _target_: dataset.pl_data_module.DataModule
 train:
-  batch_size: 150
+  batch_size: 4
   shuffle: True
   num_workers: 4
   drop_last: False

@@ -11,7 +11,7 @@ class DataModule(L.LightningDataModule):
         transform: DictConfig,     # transforms to apLy
         train: DictConfig,          # dataloader arguments from the data_module config file
         val: DictConfig = None, 
-        test: DictConfig = None
+        test: DictConfig = None,
     ) -> None:
         super().__init__()
 

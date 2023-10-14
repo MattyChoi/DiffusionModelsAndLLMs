@@ -1,15 +1,25 @@
 train:
   _target_: dataset.e2e_nlg.NLGDataset
   split: "train"
-  tokenizer: null
+  tokenizer: 
+    _target_: transformers.AutoTokenizer.from_pretrained
+    pretrained_model_name_or_path: "gpt2"
+    use_fast: True
+    use_auth_token: False
+    pad_token: '<|pad|>'
+  # collator: 
+  #   _target_: transformers.DataCollatorForLanguageModeling(
+  #   tokenizer: ${dataset.train.tokenizer}
+  #   mlm: False
+  #   return_tensors: "pt"
   max_length: 1024
 val:
   _target_: dataset.e2e_nlg.NLGDataset
   split: "validation"
-  tokenizer: null
+  tokenizer: ${dataset.train.tokenizer}
   max_length: 1024
 test: 
   _target_: dataset.e2e_nlg.NLGDataset
   split: "test"
-  tokenizer: null
+  tokenizer: ${dataset.train.tokenizer}
   max_length: 1024

@@ -6,24 +6,24 @@ num_nodes: 1
 
 defaults:
   - _self_
-  - model: diffusion
+  - model: gpt2
   - data_module: max
-  - dataset: cars
-  - transform: car_transform
+  - dataset: e2e_nlg
+  - transform: no_transform
   - loss: mse
   - user_overrides: null
 
 
-pretrained: tb_logs\lightning_logs\car_version\checkpoints\epoch=449-step=48600.ckpt # add path to the pretrained weights
+pretrained: 
 
 callbacks:
 
 tasks:
-  _target_: tasks.generate_img.DiffusionModule
+  _target_: tasks.generate_text.TextGenerationModule
 
 optimizer:
   _target_: torch.optim.Adam
-  lr: 1e-5
+  lr: 5e-4
 
 lr_scheduler:
   _target_: torch.optim.lr_scheduler.MultiStepLR

@@ -11,10 +11,10 @@ import torch.nn.functional as F
 class LayerNorm(nn.Module):
     """ LayerNorm but with an optional bias. PyTorch doesn't support bias, simply bias=False """
 
-    def __init__(self, dim, bias):
+    def __init__(self, dim, bias=False):
         super().__init__()
         self.weight = nn.Parameter(torch.ones(dim))
-        self.bias = nn.Parameter(torch.zeros(dim)) if bias else None
+        self.bias = nn.Parameter(torch.zeros(dim)) if bias else 0
 
     def forward(self, x):
         # return F.layer_norm(input, self.weight.shape, self.weight, self.bias, 1e-5)
@@ -56,12 +56,12 @@ class CausalSelfAttention(nn.Module):
         # from future timesteps
         self.masked = masked
         self.register_buffer(
-            'mask', 
+            'bias', 
             torch.tril(torch.ones(max_length, max_length)).view((1, 1, max_length, max_length)),
         )
 
 
-    def forward(self, x):
+    def forward(self, x, attn_mask):
         # batch, position (timestep), dimension of word embedding
         b, t, c = x.shape
 
@@ -80,22 +80,27 @@ class CausalSelfAttention(nn.Module):
         # scale this product by the square root of the dimension of the vectors
         scores *= self.scale
 
-        # if there is masking, we need to mask the scores for future timesteps
+        # if there is masking, we need to mask the scores from future timesteps
         if self.masked:
             # since the matrix is lower triangular, for each query, we can only see 
             # key vectors from the same or a previous timestep
-            scores = scores.masked_fill(self.mask[:t][:t] == 0, float('-inf'))
+            scores = scores.masked_fill(self.bias[:,:,:t,:t] == 0, float('-inf'))
+
+        if attn_mask is not None:
+            # this attention mask adds an infinitely negative number to the padded positions
+            # so they don't get any attention
+            scores += attn_mask
 
         # softmax over the last dimension (the dimension of the key vectors)
         attn = scores.softmax(dim = -1)
         attn = self.dropout(attn)
 
         # basically a linear combination where attn is the weights and v is the values
-        out = einsum('b h i j, b h d j -> b h i d', attn, v)
+        out = einsum('b h i j, b h j d -> b h i d', attn, v)
 
         # concatenate all the heads now
         out = rearrange(out, 'b h t d -> b t (h d)')
         out = self.mha_dropout(self.to_out(out))
-
+        
         return out
     

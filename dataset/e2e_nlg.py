@@ -8,7 +8,7 @@ sys.path.insert(0, os.getcwd())
 import matplotlib.pyplot as plt
 from datasets import load_dataset
 from torch.utils.data import Dataset
-from transformers import AutoTokenizer, DataCollatorWithPadding
+from transformers import AutoTokenizer, DataCollatorForLanguageModeling
 
 
 def tokenize_fn(
@@ -32,7 +32,7 @@ class NLGDataset(Dataset):
     """
     Dataset of texts in english from oscar-corpus/OSCAR-2301 huggingface
     """
-    def __init__(self, split="train", tokenizer="", max_length=1024):
+    def __init__(self, split="train", tokenizer="", max_length=1024, transform=None):
         super(NLGDataset, self).__init__()
         
         dataset = load_dataset(
@@ -43,9 +43,10 @@ class NLGDataset(Dataset):
         # create a tokenizer here, we use the bert-large-cased tokenizer from huggingface
         # but we can also pretrain one
         self.tokenizer = AutoTokenizer.from_pretrained(
-            "bert-large-cased",
+            "gpt2",
             use_fast=True,
             use_auth_token=False,
+            pad_token='<|pad|>',
         ) if not tokenizer else tokenizer
 
         # tokenize the dataset
@@ -65,8 +66,9 @@ class NLGDataset(Dataset):
 
         self.dataset = tokenized_dataset
 
-        self.collator = DataCollatorWithPadding(
+        self.collator = DataCollatorForLanguageModeling(
             tokenizer=self.tokenizer,
+            mlm=False,
             return_tensors="pt",
         )
 

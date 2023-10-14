@@ -10,67 +10,67 @@ import torchmetrics
 from omegaconf import DictConfig
 
 
-class GenTextModule(L.LightningModule):
+class TextGenerationModule(L.LightningModule):
     def __init__(self, hparams: DictConfig):
         super().__init__()
         self.save_hyperparameters(hparams)
         self.model = hydra.utils.instantiate(hparams.model)
-        self.loss = hydra.utils.instantiate(hparams.loss)
-
-    def forward(self, images: torch.Tensor, *args, **kwargs):
-        return self.model(images)
+        # self.loss = hydra.utils.instantiate(hparams.loss)
 
     def training_step(
-        self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
+        self, batch, batch_idx: int, *args, **kwargs
     ) -> torch.Tensor:
-        # get the training image distribution
-        images = batch
+        # get all the data
+        input_ids = batch["input_ids"]
+        attn_mask = batch["attention_mask"]
+        labels = batch["input_ids"]
 
-        # noise the images randomly and predict the noise from the noisy images
-        pred_noise, noise = self.forward(images)
+        # run it through the model to get the logits and loss
+        logits, loss = self.model(input_ids, attn_mask, labels)
 
-        # computer loss and log
-        loss = self.loss(pred_noise, noise)
-        self.log("train_loss", loss, on_step=True, one_epoch=True)
+        # log the loss
+        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         return loss
 
     def validation_step(
         self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
     ) -> torch.Tensor:
-        # get the training image distribution
-        images = batch
+        # get all the data
+        input_ids = batch["input_ids"]
+        attn_mask = batch["attention_mask"]
+        labels = batch["input_ids"]
 
-        # noise the images randomly and predict the noise from the noisy images
-        pred_noise, noise = self.forward(images)
+        # run it through the model to get the logits and loss
+        logits, loss = self.model(input_ids, attn_mask, labels)
 
-        # computer loss and log
-        loss = self.loss(pred_noise, noise)
-        self.log("val_loss", loss, on_step=True)
+        # log the loss
+        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         return loss
 
-    def validation_epoch_end(self, val_step_outs) -> None:
-        tboard = self.logger.experiment
+    # def on_validation_epoch_end(self) -> None:
+    #     tboard = self.logger.experiment
 
-        # sample 16 images
-        imgs = self.model.sample(batch_size=16)
+    #     # sample 16 images
+    #     imgs = self.model.sample(batch_size=16)
 
-        tboard.add_images(f"Generated Images_{self.global_step}", img_tensor=imgs[-1], dataformats="NHWC")
+    #     tboard.add_images(f"Generated Images_{self.global_step}", img_tensor=imgs[-1], dataformats="NHWC")
 
 
     def test_step(
         self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
     ) -> torch.Tensor:
-        # get the training image distribution
-        images = batch
+        # get all the data
+        input_ids = batch["input_ids"]
+        attn_mask = batch["attention_mask"]
+        labels = batch["input_ids"]
 
-        # noise the images randomly and predict the noise from the noisy images
-        pred_noise, noise = self.forward(images)
+        # run it through the model to get the logits and loss
+        logits, loss = self.model(input_ids, attn_mask, labels)
 
-        # computer loss and log
-        loss = self.loss(pred_noise, noise)
-        self.log("test_loss", loss, on_step=True)
+        # log the loss
+        self.log("test_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         return loss
 

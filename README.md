@@ -22,7 +22,7 @@ python tools/predictor.py
 
 To observe tensorboard logs if enabled, use the following command
 ```
-tensorboard --logdir ./tb_logs/lightning_logs/{current version}
+tensorboard --logdir ./lightning_logs/{current version}
 ```
 
 Some useful links
