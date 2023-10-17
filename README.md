@@ -6,7 +6,15 @@ Once in the directory containing the contents of the repository, run
 ```
 pip install -r requirements.txt
 ```
-if you do not have all the necessary packages listed.
+if you do not have all the necessary packages listed. Or, if you are using conda, you use the commands
+
+```
+conda env create --file requirements.yaml
+conda activate diffllm
+```
+
+More on conda with GPUS:
+ - https://fmorenovr.medium.com/set-up-conda-environment-pytorch-1-7-cuda-11-1-96a8e93014cc
 
 ## Instructions 
 
@@ -31,3 +39,23 @@ Some useful links
  - https://github.com/Infatoshi/fcc-intro-to-llms
  - https://towardsdatascience.com/train-and-deploy-fine-tuned-gpt-2-model-using-pytorch-on-amazon-sagemaker-to-classify-news-articles-612f9957c7b
  - https://medium.com/@jacobparnell/tune-transformers-using-pytorch-lightning-and-huggingface-f056373ff0e3
+
+
+## Docker
+
+Run a docker container from a docker image built from the Dockerfile  
+
+```
+docker build -t diffllm .
+```
+
+and then run a container using this command
+
+```
+docker run --name diffllm --gpus all -it --rm diffllm
+```
+
+Used these resources to help make dockerfile
+ - https://saturncloud.io/blog/how-to-install-pytorch-on-the-gpu-with-docker/
+ - https://stackoverflow.com/questions/65492490/how-to-conda-install-cuda-enabled-pytorch-in-a-docker-container
+

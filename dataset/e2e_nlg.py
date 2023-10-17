@@ -47,6 +47,7 @@ class NLGDataset(Dataset):
             use_fast=True,
             use_auth_token=False,
             pad_token='<|pad|>',
+            padding_side="left"
         ) if not tokenizer else tokenizer
 
         # tokenize the dataset
@@ -76,7 +77,7 @@ class NLGDataset(Dataset):
         return self.dataset[index]
 
     def __len__(self):
-        return len(self.dataset)
+        return 200
     
     def collate_fn(self, batch):
         return self.collator(batch)

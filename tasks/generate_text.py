@@ -4,10 +4,11 @@ import sys
 sys.path.insert(0, os.getcwd())
 
 import hydra
+from omegaconf import DictConfig
 import lightning as L
 import torch
 import torchmetrics
-from omegaconf import DictConfig
+from transformers import AutoTokenizer
 
 
 class TextGenerationModule(L.LightningModule):
@@ -15,6 +16,13 @@ class TextGenerationModule(L.LightningModule):
         super().__init__()
         self.save_hyperparameters(hparams)
         self.model = hydra.utils.instantiate(hparams.model)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            "gpt2",
+            use_fast=True,
+            use_auth_token=False,
+            pad_token='<|pad|>',
+            padding_side="left"
+        )
         # self.loss = hydra.utils.instantiate(hparams.loss)
 
     def training_step(
@@ -23,8 +31,8 @@ class TextGenerationModule(L.LightningModule):
         # get all the data
         input_ids = batch["input_ids"]
         attn_mask = batch["attention_mask"]
-        labels = batch["input_ids"]
-
+        labels = batch["labels"]
+        
         # run it through the model to get the logits and loss
         logits, loss = self.model(input_ids, attn_mask, labels)
 
@@ -39,7 +47,7 @@ class TextGenerationModule(L.LightningModule):
         # get all the data
         input_ids = batch["input_ids"]
         attn_mask = batch["attention_mask"]
-        labels = batch["input_ids"]
+        labels = batch["labels"]
 
         # run it through the model to get the logits and loss
         logits, loss = self.model(input_ids, attn_mask, labels)
@@ -49,14 +57,29 @@ class TextGenerationModule(L.LightningModule):
 
         return loss
 
-    # def on_validation_epoch_end(self) -> None:
-    #     tboard = self.logger.experiment
+    def on_validation_epoch_end(self) -> None:
+        # tboard = self.logger.experiment
 
-    #     # sample 16 images
-    #     imgs = self.model.sample(batch_size=16)
+        num_samples = 5
+        max_new_tokens = 500
 
-    #     tboard.add_images(f"Generated Images_{self.global_step}", img_tensor=imgs[-1], dataformats="NHWC")
+        prompt = "What is the answer to life, the universe, and everything?"
+        input = self.tokenizer(
+            prompt,
+            add_special_tokens=False,
+            max_length=self.model.max_length,
+            padding="max_length",
+            truncation=True,
+        )
+        start_ids = input["input_ids"]
+        attn_mask = input["attention_mask"]
 
+        start_ids = torch.tensor(start_ids, dtype=torch.long, device=self.device)[None, ...]
+        attn_mask = torch.tensor(attn_mask, dtype=torch.float, device=self.device)[None, ...]
+        for _ in range(num_samples):
+            y = self.model.generate(start_ids, max_new_tokens, attn_mask)
+            self.print(self.tokenizer.decode(y[0].tolist()))
+            self.print('---------------')
 
     def test_step(
         self, batch: torch.Tensor, batch_idx: int, *args, **kwargs
@@ -64,7 +87,7 @@ class TextGenerationModule(L.LightningModule):
         # get all the data
         input_ids = batch["input_ids"]
         attn_mask = batch["attention_mask"]
-        labels = batch["input_ids"]
+        labels = batch["labels"]
 
         # run it through the model to get the logits and loss
         logits, loss = self.model(input_ids, attn_mask, labels)

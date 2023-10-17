@@ -56,7 +56,7 @@ class DecoderBlock(nn.Module):
         self.ln2 = LayerNorm(emb_dim)
         self.mlp = FFN(emb_dim)
 
-    def forward(self, x, attn_mask):
+    def forward(self, x, attn_mask=None):
         # https://datascience.stackexchange.com/questions/85486/what-is-the-difference-between-gpt-blocks-and-transformer-decoder-blocks
         x = x + self.attn(self.ln1(x), attn_mask)
         x = x + self.mlp(self.ln2(x))
@@ -122,7 +122,7 @@ class GPT2LMHeadModel(nn.Module):
             torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
 
-    def forward(self, idx, attn_mask, labels=None):
+    def forward(self, idx, attn_mask=None, labels=None):
         """
         idx: outputs of a string of words through a tokenizer, should have shape (batch_size, vocab_size)
         attn_mask: vector of the same shape as idx with 0s for pad tokens and 0s for the rest
@@ -136,12 +136,6 @@ class GPT2LMHeadModel(nn.Module):
 
         assert t <= self.max_length, f"Cannot forward sequence of length {t}, block size is only {self.max_length}"
 
-        # create the attention mask for the causal attention mechanism
-        attn_mask = attn_mask.view(b, -1)       # make sure it's the same shape as the tokens
-        attn_mask = attn_mask[:, None, None, :]
-        attn_mask = (1.0 - attn_mask)
-        attn_mask[attn_mask == 1] = float("-inf")
-
         pos = torch.arange(t, dtype=torch.long, device=device)
 
         # get the word and positional embeddings
@@ -150,6 +144,12 @@ class GPT2LMHeadModel(nn.Module):
 
         # put through dropout
         x = self.transformer.dropout(tok_emb + pos_emb) # shape is (b, t, emb_dim)
+
+        # create the attention mask for the causal attention mechanism
+        if attn_mask is not None:
+            attn_mask = attn_mask.view(b, -1)       # make sure it's the same shape as the tokens
+            attn_mask = attn_mask[:, None, None, :]
+            attn_mask = (1.0 - attn_mask) * torch.finfo(x.dtype).min
 
         # put it through the decoder blocks
         for block in self.transformer.decoder:
@@ -180,18 +180,19 @@ class GPT2LMHeadModel(nn.Module):
         return logits, loss
     
     @torch.no_grad()
-    def generate(self, idx, max_new_tokens):
+    def generate(self, idx, max_new_tokens, attn_mask=None):
         """
         Take a conditioning sequence of indices idx (LongTensor of shape (b,t)) and complete
         the sequence max_new_tokens times, feeding the predictions back into the model each time.
         Most likely you'll want to make sure to be in model.eval() mode of operation for this.
         """
+        b, t = idx.shape
         for _ in range(max_new_tokens):
             # if the sequence context is growing too long we must crop it at block_size
             idx_crop = idx if idx.size(1) <= self.max_length else idx[:, -self.max_length:]
 
             # get the logits for each batch
-            logits, _ = self.forward(idx_crop)  # shape is (b, 1, vocab_size)
+            logits, _ = self.forward(idx_crop, attn_mask)  # shape is (b, 1, vocab_size)
 
             # focus only on the last time step although this is already done for 
             # inference without any targets
@@ -206,4 +207,11 @@ class GPT2LMHeadModel(nn.Module):
             # append sampled index to the running sequence
             idx = torch.cat((idx, idx_next), dim=1)
 
+            # update attention mask
+            if attn_mask is not None:
+                ind = torch.sum(attn_mask, dim=1, dtype=torch.long)
+                batch_inds = ind < t
+                ind = ind[batch_inds]
+                attn_mask[batch_inds.nonzero(), ind] = 1.0
+                
         return idx

@@ -61,7 +61,7 @@ class CausalSelfAttention(nn.Module):
         )
 
 
-    def forward(self, x, attn_mask):
+    def forward(self, x, attn_mask=None):
         # batch, position (timestep), dimension of word embedding
         b, t, c = x.shape
 
@@ -84,7 +84,7 @@ class CausalSelfAttention(nn.Module):
         if self.masked:
             # since the matrix is lower triangular, for each query, we can only see 
             # key vectors from the same or a previous timestep
-            scores = scores.masked_fill(self.bias[:,:,:t,:t] == 0, float('-inf'))
+            scores = scores.masked_fill(self.bias[:,:,:t,:t] == 0, torch.finfo(scores.dtype).min)
 
         if attn_mask is not None:
             # this attention mask adds an infinitely negative number to the padded positions
