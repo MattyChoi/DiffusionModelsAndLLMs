@@ -2,7 +2,7 @@ _target_: dataset.pl_data_module.DataModule
 train:
   batch_size: 4
   shuffle: True
-  num_workers: 4
+  num_workers: 3
   drop_last: False
   pin_memory: True
   collate_fn: null

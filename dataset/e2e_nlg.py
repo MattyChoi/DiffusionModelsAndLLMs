@@ -77,7 +77,7 @@ class NLGDataset(Dataset):
         return self.dataset[index]
 
     def __len__(self):
-        return 200
+        return len(self.dataset)
     
     def collate_fn(self, batch):
         return self.collator(batch)

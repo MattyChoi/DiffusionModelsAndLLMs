@@ -3,6 +3,9 @@ tb_logs
 lightning_logs/*
 text-sed
 sample.png
+# *.png
+# *.gif
+*.ipynb
 
 
 # Byte-compiled / optimized / DLL files
