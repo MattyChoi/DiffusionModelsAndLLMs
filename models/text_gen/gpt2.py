@@ -210,8 +210,8 @@ class GPT2LMHeadModel(nn.Module):
             # update attention mask
             if attn_mask is not None:
                 ind = torch.sum(attn_mask, dim=1, dtype=torch.long)
-                batch_inds = ind < t
+                batch_inds = (ind < t).nonzero()
                 ind = ind[batch_inds]
-                attn_mask[batch_inds.nonzero(), ind] = 1.0
+                attn_mask[batch_inds, ind] = 1.0
                 
         return idx

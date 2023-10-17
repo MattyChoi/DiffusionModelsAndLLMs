@@ -7,6 +7,7 @@ train:
     use_fast: True
     use_auth_token: False
     pad_token: '<|pad|>'
+    padding_side: "left"
   # collator: 
   #   _target_: transformers.DataCollatorForLanguageModeling(
   #   tokenizer: ${dataset.train.tokenizer}
