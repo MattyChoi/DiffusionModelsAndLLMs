@@ -16,13 +16,6 @@ class TextGenerationModule(L.LightningModule):
         super().__init__()
         self.save_hyperparameters(hparams)
         self.model = hydra.utils.instantiate(hparams.model)
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            "gpt2",
-            use_fast=True,
-            use_auth_token=False,
-            pad_token='<|pad|>',
-            padding_side="left"
-        )
         # self.loss = hydra.utils.instantiate(hparams.loss)
 
     def training_step(
@@ -64,7 +57,7 @@ class TextGenerationModule(L.LightningModule):
         max_new_tokens = 500
 
         prompt = "What is the answer to life, the universe, and everything?"
-        input = self.tokenizer(
+        input = self.model.tokenizer(
             prompt,
             add_special_tokens=False,
             max_length=self.model.max_length,
@@ -78,7 +71,7 @@ class TextGenerationModule(L.LightningModule):
         attn_mask = torch.tensor(attn_mask, dtype=torch.float, device=self.device)[None, ...]
         for _ in range(num_samples):
             y = self.model.generate(start_ids, max_new_tokens, attn_mask)
-            self.print(self.tokenizer.decode(y[0].tolist()))
+            self.print(self.model.tokenizer.decode(y[0].tolist()))
             self.print('---------------')
 
     def test_step(

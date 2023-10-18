@@ -19,4 +19,4 @@ tasks:
   _target_: tasks.generate_text.TextGenerationModule
   
 
-pretrained: lightning_logs\car_version\checkpoints\epoch=449-step=48600.ckpt # add path to the pretrained weights
+pretrained: # lightning_logs\car_version\checkpoints\ # add path to the pretrained weights

@@ -69,6 +69,7 @@ class GPT2LMHeadModel(nn.Module):
         vocab_size: int,
         max_length: int, 
         emb_dim: int,
+        tokenizer,
         num_heads: int, 
         num_layers: int,
         dropout: float = 0.1,
@@ -77,12 +78,14 @@ class GPT2LMHeadModel(nn.Module):
         vocab_size: number of tokens in the dataset
         max_length: the maximum length of timesteps
         emb_dim: number of dimensions you want for each word embedding
+        tokenizer: to get the tokenizer eos and pad tokens
         num_heads: number of heads for self attention
         num_layers: number of decoder blocks
         """
         super().__init__()
 
         self.max_length = max_length
+        self.tokenizer = tokenizer
 
         self.transformer = nn.ModuleDict(dict(
             # create word embeddings from tokens
@@ -180,19 +183,29 @@ class GPT2LMHeadModel(nn.Module):
         return logits, loss
     
     @torch.no_grad()
-    def generate(self, idx, max_new_tokens, attn_mask=None):
+    def generate(self, input_ids, max_new_tokens, attn_mask=None):
         """
         Take a conditioning sequence of indices idx (LongTensor of shape (b,t)) and complete
         the sequence max_new_tokens times, feeding the predictions back into the model each time.
         Most likely you'll want to make sure to be in model.eval() mode of operation for this.
         """
-        b, t = idx.shape
-        for _ in range(max_new_tokens):
-            # if the sequence context is growing too long we must crop it at block_size
-            idx_crop = idx if idx.size(1) <= self.max_length else idx[:, -self.max_length:]
+        b, t = input_ids.shape
 
+        # use the eos_token to know when a sequence is done generating
+        eos_token_id = self.tokenizer.eos_token_id
+
+        # use the pad_token to pad the remainder of the sentence
+        pad_token_id = self.tokenizer.pad_token_id
+
+        # create a tensor for the eos_token
+        eos_token_tensor = torch.tensor([eos_token_id]).to(input_ids.device)
+
+        # keep track of which sequences are already finished
+        unfinished_sequences = torch.ones(b, dtype=torch.long, device=input_ids.device)
+
+        for _ in range(max_new_tokens):
             # get the logits for each batch
-            logits, _ = self.forward(idx_crop, attn_mask)  # shape is (b, 1, vocab_size)
+            logits, _ = self.forward(input_ids, attn_mask)  # shape is (b, 1, vocab_size)
 
             # focus only on the last time step although this is already done for 
             # inference without any targets
@@ -202,16 +215,36 @@ class GPT2LMHeadModel(nn.Module):
             probs = F.softmax(logits, dim=-1) # (b, vocab_size)
 
             # sample from the distribution
-            idx_next = torch.multinomial(probs, num_samples=1) # (b, 1)
+            next_tokens = torch.multinomial(probs, num_samples=1) # (b, 1)
+            
+            # finished sentences should have their next token be a padding token
+            next_tokens = next_tokens * unfinished_sequences + pad_token_id * (1 - unfinished_sequences)
 
             # append sampled index to the running sequence
-            idx = torch.cat((idx, idx_next), dim=1)
+            input_ids = torch.cat([input_ids, next_tokens], dim=-1)
 
             # update attention mask
             if attn_mask is not None:
-                ind = torch.sum(attn_mask, dim=1, dtype=torch.long)
-                batch_inds = (ind < t).nonzero()
-                ind = ind[batch_inds]
-                attn_mask[batch_inds, ind] = 1.0
+                attn_mask = torch.cat(
+                    [
+                        attn_mask, 
+                        attn_mask.new_ones((b, 1))
+                    ], 
+                    dim=-1,
+                )
+
+            # crop the inputs and attn_mask
+            input_ids = input_ids[:, 1:]
+            attn_mask = attn_mask[:, 1:]
+
+            # if eos_token was found in a sentence, set the sentence to being finished
+            unfinished_sequences = unfinished_sequences.mul(
+                next_tokens.ne(eos_token_tensor)
+            )
+
+            # break the loop if all sentences are finished
+            if unfinished_sequences.max() == 0:
+                break
+
                 
-        return idx
+        return input_ids

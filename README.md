@@ -39,6 +39,9 @@ Some useful links
  - https://github.com/Infatoshi/fcc-intro-to-llms
  - https://towardsdatascience.com/train-and-deploy-fine-tuned-gpt-2-model-using-pytorch-on-amazon-sagemaker-to-classify-news-articles-612f9957c7b
  - https://medium.com/@jacobparnell/tune-transformers-using-pytorch-lightning-and-huggingface-f056373ff0e3
+ - https://github.com/huggingface/transformers/blob/298bed16a841fae3608d334441ccae4d9043611f/src/transformers/modeling_gpt2.py#L146
+ - https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
+ 
 
 
 ## Docker
