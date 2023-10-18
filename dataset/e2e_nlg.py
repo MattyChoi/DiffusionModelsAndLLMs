@@ -46,7 +46,7 @@ class NLGDataset(Dataset):
             "gpt2",
             use_fast=True,
             use_auth_token=False,
-            pad_token='<|pad|>',
+            pad_token="<|endoftext|>",
             padding_side="left"
         ) if not tokenizer else tokenizer
 

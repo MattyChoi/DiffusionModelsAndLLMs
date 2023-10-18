@@ -1,5 +1,5 @@
-_target_: models.text_gen.gpt2.GPT2LMHeadModel
-vocab_size: 50304 
+_target_: models.text_gen.gpt2.GPT2LM
+vocab_size: 50257 
 max_length: 1024
 emb_dim: 768
 tokenizer: 
@@ -7,7 +7,7 @@ tokenizer:
   pretrained_model_name_or_path: "gpt2"
   use_fast: True
   use_auth_token: False
-  pad_token: '<|pad|>'
+  pad_token: "<|endoftext|>"
   padding_side: "left"
 num_heads: 8  # 12 
 num_layers: 3 # 12

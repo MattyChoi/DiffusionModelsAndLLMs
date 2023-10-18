@@ -6,7 +6,7 @@ train:
     pretrained_model_name_or_path: "gpt2"
     use_fast: True
     use_auth_token: False
-    pad_token: '<|pad|>'
+    pad_token: "<|endoftext|>"
     padding_side: "left"
   # collator: 
   #   _target_: transformers.DataCollatorForLanguageModeling(

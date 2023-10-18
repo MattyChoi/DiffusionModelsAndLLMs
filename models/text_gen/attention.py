@@ -11,7 +11,7 @@ import torch.nn.functional as F
 class LayerNorm(nn.Module):
     """ LayerNorm but with an optional bias. PyTorch doesn't support bias, simply bias=False """
 
-    def __init__(self, dim, bias=False):
+    def __init__(self, dim, bias=True):
         super().__init__()
         self.weight = nn.Parameter(torch.ones(dim))
         self.bias = nn.Parameter(torch.zeros(dim)) if bias else 0
@@ -30,23 +30,31 @@ class LayerNorm(nn.Module):
 class CausalSelfAttention(nn.Module):
     """ Multi-Head attention mechanism """
 
-    def __init__(self, emb_dim, max_length, num_heads = 4, head_dim = 32, dropout=0.1, masked=True):
+    def __init__(
+        self, 
+        emb_dim, 
+        max_length, 
+        num_heads=4, 
+        head_dim=None, 
+        dropout=0.1, 
+        masked=True
+    ):
         super().__init__()
-        # scale the QK^T
-        self.scale = head_dim ** -0.5
         
         # set the number of heads we want for multi-head attention
         self.num_heads = num_heads
 
         # head_dim is the new dimensions we want for each word embedding so to achieve 
         # multi-head attention, multiply this by the desired number of heads
-        hidden_dim = head_dim * num_heads
-        
+        hidden_dim = emb_dim
+        if head_dim is not None:
+            hidden_dim = head_dim * num_heads
+            
         # create the matrices needed to compute the query, key, and value vectors
-        self.to_qkv = nn.Linear(emb_dim, hidden_dim * 3)
+        self.c_attn = nn.Linear(emb_dim, hidden_dim * 3)
 
         # one last mlp to combine all information from all the heads
-        self.to_out = nn.Linear(hidden_dim, emb_dim)
+        self.c_proj = nn.Linear(hidden_dim, emb_dim)
 
         # dropouts for qkv computing and multi-head attention projection
         self.dropout = nn.Dropout(dropout)
@@ -66,7 +74,7 @@ class CausalSelfAttention(nn.Module):
         b, t, c = x.shape
 
         # get the query, value, and key vectors
-        qkv = self.to_qkv(x).chunk(3, dim = 2)
+        qkv = self.c_attn(x).chunk(3, dim = 2)
 
         # rearrange the vectors so that we separate by each head
         # new shape = batch, head, position(timestep), head_dim
@@ -75,10 +83,8 @@ class CausalSelfAttention(nn.Module):
         # matrix multiply the query and key vectors to get a table of the dot products
         # of each query and key vector at every pair of timesteps in the given block
         # i is the dimension for the query vector, and k is the dimenstion for the key vector
-        scores = einsum('b h i d, b h j d -> b h i j', q, k)
-
         # scale this product by the square root of the dimension of the vectors
-        scores *= self.scale
+        scores = einsum('b h i d, b h j d -> b h i j', q, k) / (k.size(-1) ** 0.5)
 
         # if there is masking, we need to mask the scores from future timesteps
         if self.masked:
@@ -100,7 +106,7 @@ class CausalSelfAttention(nn.Module):
 
         # concatenate all the heads now
         out = rearrange(out, 'b h t d -> b t (h d)')
-        out = self.mha_dropout(self.to_out(out))
+        out = self.mha_dropout(self.c_proj(out))
         
         return out
     
