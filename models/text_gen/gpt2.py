@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.text_gen.attention import LayerNorm, CausalSelfAttention
+from models.text_gen.attention import CausalSelfAttention
 from transformers import AutoTokenizer
 
 
@@ -37,7 +37,7 @@ class DecoderBlock(nn.Module):
     GPT uses only a decoder block and no encoder
     """
 
-    def __init__(self, emb_dim, max_length, num_heads=4):
+    def __init__(self, emb_dim, max_length, num_heads=4, layer_norm_epsilon=1e-05):
         """
         dim: the current dimension of the word embeddings
         max_length: the maximum length of timesteps
@@ -45,7 +45,7 @@ class DecoderBlock(nn.Module):
         """
         super().__init__()
 
-        self.ln_1 = LayerNorm(emb_dim)
+        self.ln_1 = nn.LayerNorm(emb_dim, eps=layer_norm_epsilon)
         self.attn = CausalSelfAttention(
             emb_dim, 
             max_length, 
@@ -54,7 +54,7 @@ class DecoderBlock(nn.Module):
             dropout=0.1, 
             masked=True
         )
-        self.ln_2 = LayerNorm(emb_dim)
+        self.ln_2 = nn.LayerNorm(emb_dim)
         self.mlp = FFN(emb_dim)
 
     def forward(self, x, attn_mask=None):
@@ -246,9 +246,9 @@ class GPT2LM(nn.Module):
         x = self.transformer.ln_f(x) # shape is (b, t, emb_dim)
 
         loss = None
+        # get the scores for each vocab
+        logits = self.lm_head(x) # shape is (b, t, vocab_size)
         if labels is not None:
-            # get the scores for each vocab
-            logits = self.lm_head(x) # shape is (b, t, vocab_size)
 
             # shift the logits and labels so that tokens < n predict n
             shift_logits = logits[..., :-1, :].contiguous()
@@ -260,9 +260,6 @@ class GPT2LM(nn.Module):
                 shift_logits.view(-1, shift_logits.size(-1)), 
                 shift_labels.view(-1), 
             )
-        else:
-            # if there is no desired target, just use the logits from the last time step
-            logits = self.lm_head(x)[:, [-1], :] # shape is (b, 1, vocab_size)
         
         return logits, loss
     
@@ -298,8 +295,10 @@ class GPT2LM(nn.Module):
             # apply softmax to get probabilities
             probs = F.softmax(logits, dim=-1) # (b, vocab_size)
 
-            # sample from the distribution
-            next_tokens = torch.multinomial(probs, num_samples=1) # (b, 1)
+            # find the most likely token
+            next_tokens = torch.argmax(probs, dim=-1, keepdim=True) # (b, 1)
+            # # or sample from the distribution
+            # next_tokens = torch.multinomial(probs, num_samples=1) # (b, 1)
             
             # finished sentences should have their next token be a padding token
             next_tokens = next_tokens * unfinished_sequences + pad_token_id * (1 - unfinished_sequences)
@@ -318,8 +317,9 @@ class GPT2LM(nn.Module):
                 )
 
             # crop the inputs and attn_mask
-            input_ids = input_ids[:, 1:]
-            attn_mask = attn_mask[:, 1:]
+            if input_ids.size(-1) > self.max_length:
+                input_ids = input_ids[:, -self.max_length:]
+                attn_mask = attn_mask[:, -self.max_length:]
 
             # if eos_token was found in a sentence, set the sentence to being finished
             unfinished_sequences = unfinished_sequences.mul(
