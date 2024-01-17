@@ -9,7 +9,7 @@ pip install -r requirements.txt
 if you do not have all the necessary packages listed. Or, if you are using conda, you use the commands
 
 ```
-conda env create --file requirements.yaml
+conda env create --file environment.yml
 conda activate diffllm
 ```
 
